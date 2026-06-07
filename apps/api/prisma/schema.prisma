@@ -71,6 +71,7 @@ model Course {
   description String?
   coverImage  String?
   priceCents  Int          @default(0)
+  priceArs    Int          @default(0)
   currency    String       @default("USD")
   status      CourseStatus @default(DRAFT)
   createdAt   DateTime     @default(now())

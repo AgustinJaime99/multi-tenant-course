@@ -1,9 +1,11 @@
 import { Inject, Injectable, NotFoundException } from "@nestjs/common";
-import { CourseDto } from "@app/shared";
+import { CourseDto, LessonDto, ModuleDto } from "@app/shared";
 import {
   COURSE_REPOSITORY,
   CourseRepository,
   CreateCourseData,
+  CreateLessonData,
+  CreateModuleData,
 } from "../domain/course.repository";
 
 @Injectable()
@@ -44,5 +46,44 @@ export class CoursesService {
   async remove(id: string): Promise<void> {
     await this.getById(id);
     await this.courses.delete(id);
+  }
+
+  // ─── Module management ──────────────────────────────────
+
+  async addModule(courseId: string, data: CreateModuleData): Promise<ModuleDto> {
+    await this.getById(courseId);
+    return this.courses.createModule(courseId, data);
+  }
+
+  async editModule(moduleId: string, data: Partial<CreateModuleData>): Promise<ModuleDto> {
+    const mod = await this.courses.findModuleById(moduleId);
+    if (!mod) throw new NotFoundException("Módulo no encontrado");
+    return this.courses.updateModule(moduleId, data);
+  }
+
+  async removeModule(moduleId: string): Promise<void> {
+    const mod = await this.courses.findModuleById(moduleId);
+    if (!mod) throw new NotFoundException("Módulo no encontrado");
+    await this.courses.deleteModule(moduleId);
+  }
+
+  // ─── Lesson management ──────────────────────────────────
+
+  async addLesson(moduleId: string, data: CreateLessonData): Promise<LessonDto> {
+    const mod = await this.courses.findModuleById(moduleId);
+    if (!mod) throw new NotFoundException("Módulo no encontrado");
+    return this.courses.createLesson(moduleId, data);
+  }
+
+  async editLesson(lessonId: string, data: Partial<CreateLessonData>): Promise<LessonDto> {
+    const lesson = await this.courses.findLessonById(lessonId);
+    if (!lesson) throw new NotFoundException("Lección no encontrada");
+    return this.courses.updateLesson(lessonId, data);
+  }
+
+  async removeLesson(lessonId: string): Promise<void> {
+    const lesson = await this.courses.findLessonById(lessonId);
+    if (!lesson) throw new NotFoundException("Lección no encontrada");
+    await this.courses.deleteLesson(lessonId);
   }
 }

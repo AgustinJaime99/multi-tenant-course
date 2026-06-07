@@ -6,9 +6,12 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatPrice(cents: number, currency = "USD") {
-  return new Intl.NumberFormat("es-ES", {
+  const locale = currency === "ARS" ? "es-AR" : "es-ES";
+  return new Intl.NumberFormat(locale, {
     style: "currency",
     currency,
+    // ARS has no decimals by convention (e.g. $ 10.000)
+    maximumFractionDigits: currency === "ARS" ? 0 : 2,
   }).format(cents / 100);
 }
 

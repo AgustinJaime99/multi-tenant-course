@@ -48,6 +48,7 @@ export interface CourseDto {
   description?: string | null;
   coverImage?: string | null;
   priceCents: number;
+  priceArs: number;
   currency: string;
   status: "DRAFT" | "PUBLISHED";
   modules: ModuleDto[];

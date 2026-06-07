@@ -192,3 +192,138 @@ export function useUpdateTicketStatus() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["admin", "tickets"] }),
   });
 }
+
+// ─── Admin course management ────────────────────────────
+
+export function useAdminCourses() {
+  return useQuery({
+    queryKey: ["admin", "courses"],
+    queryFn: async () => (await api.get<CourseDto[]>("/courses/admin/all")).data,
+  });
+}
+
+export function useCreateCourse() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (body: {
+      slug: string;
+      title: string;
+      subtitle?: string;
+      description?: string;
+      coverImage?: string;
+      priceCents: number;
+      priceArs?: number;
+      currency?: string;
+      status?: "DRAFT" | "PUBLISHED";
+    }) => (await api.post<CourseDto>("/courses", body)).data,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin", "courses"] });
+      qc.invalidateQueries({ queryKey: ["courses"] });
+    },
+  });
+}
+
+export function useUpdateCourse() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      ...body
+    }: Partial<{
+      slug: string;
+      title: string;
+      subtitle: string;
+      description: string;
+      coverImage: string;
+      priceCents: number;
+      priceArs: number;
+      currency: string;
+      status: "DRAFT" | "PUBLISHED";
+    }> & { id: string }) => (await api.patch<CourseDto>(`/courses/${id}`, body)).data,
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: ["admin", "courses"] });
+      qc.invalidateQueries({ queryKey: ["course", vars.id] });
+    },
+  });
+}
+
+export function useDeleteCourse() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => api.delete(`/courses/${id}`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin", "courses"] });
+      qc.invalidateQueries({ queryKey: ["courses"] });
+    },
+  });
+}
+
+export function useAddModule() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ courseId, title, order }: { courseId: string; title: string; order?: number }) =>
+      (await api.post(`/courses/${courseId}/modules`, { title, order })).data,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin", "courses"] }),
+  });
+}
+
+export function useUpdateModule() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ moduleId, ...body }: { moduleId: string; title?: string; order?: number }) =>
+      (await api.patch(`/courses/modules/${moduleId}`, body)).data,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin", "courses"] }),
+  });
+}
+
+export function useDeleteModule() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (moduleId: string) => api.delete(`/courses/modules/${moduleId}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin", "courses"] }),
+  });
+}
+
+export function useAddLesson() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (body: {
+      moduleId: string;
+      title: string;
+      description?: string;
+      videoUrl?: string;
+      durationMin?: number;
+      order?: number;
+    }) => {
+      const { moduleId, ...rest } = body;
+      return (await api.post(`/courses/modules/${moduleId}/lessons`, rest)).data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin", "courses"] }),
+  });
+}
+
+export function useUpdateLesson() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (body: {
+      lessonId: string;
+      title?: string;
+      description?: string;
+      videoUrl?: string;
+      durationMin?: number;
+      order?: number;
+    }) => {
+      const { lessonId, ...rest } = body;
+      return (await api.patch(`/courses/lessons/${lessonId}`, rest)).data;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin", "courses"] }),
+  });
+}
+
+export function useDeleteLesson() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (lessonId: string) => api.delete(`/courses/lessons/${lessonId}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin", "courses"] }),
+  });
+}

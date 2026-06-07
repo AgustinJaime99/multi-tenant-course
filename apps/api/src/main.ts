@@ -16,6 +16,13 @@ async function bootstrap() {
   app.enableCors({
     origin: config.get<string>("frontendUrl"),
     credentials: true,
+    methods: ["GET", "HEAD", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
+    // Reflect whatever headers the browser asks for in the preflight,
+    // so custom/non-standard request headers don't trip the CORS check.
+    allowedHeaders: undefined,
+    // Don't let the browser cache preflight responses (avoids stale CORS
+    // results after config changes in dev).
+    maxAge: 0,
   });
 
   const swaggerConfig = new DocumentBuilder()
