@@ -101,7 +101,7 @@ export function useMyPayments() {
 
 export function useCheckout() {
   return useMutation({
-    mutationFn: async (input: { courseId: string; provider: PaymentProvider }) => {
+    mutationFn: async (input: { courseId: string; provider: PaymentProvider; currency?: "USD" | "ARS" }) => {
       const { data } = await api.post<CheckoutSession>("/payments/checkout", input);
       return data;
     },

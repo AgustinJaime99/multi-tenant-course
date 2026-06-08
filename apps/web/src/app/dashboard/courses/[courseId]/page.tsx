@@ -1,7 +1,7 @@
 "use client";
 
 import { use, useMemo, useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { LessonDto } from "@app/shared";
 import { useCourse, useProgress, useCompleteLesson, useGenerateCertificate } from "@/lib/queries";
 import { PageLoader } from "@/components/ui/page-loader";
@@ -14,6 +14,8 @@ import { CourseCurriculum } from "@/components/player/course-curriculum";
 export default function CoursePlayerPage({ params }: { params: Promise<{ courseId: string }> }) {
   const { courseId } = use(params);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const lessonParam = searchParams.get("lesson");
 
   const { data: course, isLoading } = useCourse(courseId);
   const { data: progress } = useProgress(courseId);
@@ -29,10 +31,11 @@ export default function CoursePlayerPage({ params }: { params: Promise<{ courseI
 
   useEffect(() => {
     if (!activeLesson && allLessons.length > 0) {
-      const lastId = progress?.lastLessonId;
-      setActiveLesson(allLessons.find((l) => l.id === lastId) ?? allLessons[0]);
+      // ?lesson=<id> from CurriculumPreview takes priority, then lastLessonId, then first
+      const targetId = lessonParam ?? progress?.lastLessonId;
+      setActiveLesson(allLessons.find((l) => l.id === targetId) ?? allLessons[0]);
     }
-  }, [allLessons, progress, activeLesson]);
+  }, [allLessons, progress, activeLesson, lessonParam]);
 
   if (isLoading || !course) return <PageLoader />;
 

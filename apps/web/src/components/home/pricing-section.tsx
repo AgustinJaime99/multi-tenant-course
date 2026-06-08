@@ -14,7 +14,7 @@ export function PricingSection({ course }: Props) {
       <div className="mx-auto max-w-5xl px-4 sm:px-6">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-3xl font-bold sm:text-4xl">El curso</h2>
-          <p className="mt-4 text-ink-200">Acceso completo, de por vida, con certificado.</p>
+          <p className="mt-4 text-ink-200">Acceso completo, con certificado.</p>
         </div>
 
         {course && (

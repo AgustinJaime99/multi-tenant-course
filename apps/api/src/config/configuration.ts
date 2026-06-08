@@ -2,7 +2,9 @@ export interface AppConfig {
   port: number;
   nodeEnv: string;
   frontendUrl: string;
+  frontendPublicUrl: string;
   backendUrl: string;
+  accessDurationMinutes: number;
   jwt: {
     accessSecret: string;
     refreshSecret: string;
@@ -20,7 +22,9 @@ export default (): AppConfig => ({
   port: parseInt(process.env.API_PORT ?? "4000", 10),
   nodeEnv: process.env.NODE_ENV ?? "development",
   frontendUrl: process.env.FRONTEND_URL ?? "http://localhost:3000",
+  frontendPublicUrl: process.env.FRONTEND_PUBLIC_URL ?? process.env.FRONTEND_URL ?? "http://localhost:3000",
   backendUrl: process.env.BACKEND_URL ?? "http://localhost:4000",
+  accessDurationMinutes: parseInt(process.env.ACCESS_DURATION_MINUTES ?? "131400", 10), // 131400 min = 3 months
   jwt: {
     accessSecret: process.env.JWT_ACCESS_SECRET ?? "dev-access-secret",
     refreshSecret: process.env.JWT_REFRESH_SECRET ?? "dev-refresh-secret",

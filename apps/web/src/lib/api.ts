@@ -9,9 +9,10 @@ export const api = axios.create({ baseURL });
 
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const token = useAuthStore.getState().accessToken;
-  if (token) {
-    config.headers.set("Authorization", `Bearer ${token}`);
-  }
+  if (token) config.headers.set("Authorization", `Bearer ${token}`);
+  // Needed when routing through ngrok: skips the browser warning page
+  // that ngrok shows on first request, which has no CORS headers.
+  config.headers.set("ngrok-skip-browser-warning", "1");
   return config;
 });
 

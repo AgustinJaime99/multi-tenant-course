@@ -13,15 +13,25 @@ async function bootstrap() {
   app.setGlobalPrefix("api");
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
+  const allowedOrigins = [
+    config.get<string>("frontendUrl"),
+    "http://localhost:3000",
+    "http://localhost:3001",
+  ].filter(Boolean) as string[];
+
   app.enableCors({
-    origin: config.get<string>("frontendUrl"),
+    origin: (origin, cb) => {
+      // Allow server-to-server requests (no origin header)
+      if (!origin) return cb(null, true);
+      // Allow any Vercel preview/production URL for this project
+      if (origin.endsWith(".vercel.app")) return cb(null, true);
+      // Allow explicitly listed origins (localhost, configured frontendUrl)
+      if (allowedOrigins.includes(origin)) return cb(null, true);
+      cb(new Error(`CORS: origin ${origin} not allowed`));
+    },
     credentials: true,
     methods: ["GET", "HEAD", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
-    // Reflect whatever headers the browser asks for in the preflight,
-    // so custom/non-standard request headers don't trip the CORS check.
     allowedHeaders: undefined,
-    // Don't let the browser cache preflight responses (avoids stale CORS
-    // results after config changes in dev).
     maxAge: 0,
   });
 

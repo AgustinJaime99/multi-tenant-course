@@ -48,6 +48,7 @@ export class PaymentsService {
     userEmail: string,
     courseId: string,
     provider: PaymentProvider,
+    currency: "USD" | "ARS" = "USD",
   ): Promise<CheckoutSession> {
     const course = await this.courses.findById(courseId);
     if (!course) throw new NotFoundException("Curso no encontrado");
@@ -56,12 +57,15 @@ export class PaymentsService {
       throw new BadRequestException("Ya tienes acceso activo a este curso");
     }
 
+    // Pick the price that matches the currency the user selected in the buy box
+    const amountCents = currency === "ARS" ? course.priceArs : course.priceCents;
+
     const payment = await this.payments.create({
       userId,
       courseId,
       provider,
-      amountCents: course.priceCents,
-      currency: course.currency,
+      amountCents,
+      currency,
     });
     await this.purchases.createPending(userId, courseId, provider);
 
@@ -72,8 +76,8 @@ export class PaymentsService {
       courseTitle: course.title,
       userId,
       userEmail,
-      amountCents: course.priceCents,
-      currency: course.currency,
+      amountCents,
+      currency,
     });
     await this.payments.setExternalId(payment.id, session.externalId);
     return session;

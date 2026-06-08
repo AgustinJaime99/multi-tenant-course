@@ -7,7 +7,6 @@ import {
   Query,
   Req,
   Res,
-  UsePipes,
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 import type { Request, Response } from "express";
@@ -24,13 +23,16 @@ export class PaymentsController {
 
   @ApiBearerAuth()
   @Post("checkout")
-  @UsePipes(new ZodValidationPipe(createCheckoutSchema))
-  checkout(@CurrentUser() user: AuthUser, @Body() body: CreateCheckoutInput) {
+  checkout(
+    @CurrentUser() user: AuthUser,
+    @Body(new ZodValidationPipe(createCheckoutSchema)) body: CreateCheckoutInput,
+  ) {
     return this.paymentsService.createCheckout(
       user.id,
       user.email,
       body.courseId,
       body.provider,
+      body.currency,
     );
   }
 

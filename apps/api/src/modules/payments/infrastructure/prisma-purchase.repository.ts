@@ -1,4 +1,5 @@
 import { Injectable } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import {
   PaymentProvider,
   PurchaseDto,
@@ -9,7 +10,10 @@ import { PurchaseRepository } from "../domain/payment.repository";
 
 @Injectable()
 export class PrismaPurchaseRepository implements PurchaseRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly config: ConfigService,
+  ) {}
 
   async createPending(userId: string, courseId: string, provider: PaymentProvider) {
     const existing = await this.prisma.purchase.findFirst({
@@ -34,12 +38,16 @@ export class PrismaPurchaseRepository implements PurchaseRepository {
       where: { userId, courseId },
       select: { id: true },
     });
-    if (existing) {
-      await this.prisma.purchase.update({
-        where: { id: existing.id },
-        data: { status: "ACTIVE", startedAt: new Date() },
-      });
-    }
+    if (!existing) return;
+
+    const durationMinutes = this.config.get<number>("accessDurationMinutes") ?? 131400;
+    const startedAt = new Date();
+    const expiresAt = new Date(startedAt.getTime() + durationMinutes * 60 * 1000);
+
+    await this.prisma.purchase.update({
+      where: { id: existing.id },
+      data: { status: "ACTIVE", startedAt, expiresAt },
+    });
   }
 
   async setStatusByCourse(userId: string, courseId: string, status: PurchaseStatus): Promise<void> {
@@ -52,9 +60,19 @@ export class PrismaPurchaseRepository implements PurchaseRepository {
   async hasActiveAccess(userId: string, courseId: string): Promise<boolean> {
     const p = await this.prisma.purchase.findFirst({
       where: { userId, courseId, status: "ACTIVE" },
-      select: { id: true },
+      select: { expiresAt: true },
     });
-    return !!p;
+    if (!p) return false;
+    // If expiresAt is set, check it hasn't passed
+    if (p.expiresAt && p.expiresAt < new Date()) {
+      // Expire it in the background without blocking the request
+      void this.prisma.purchase.updateMany({
+        where: { userId, courseId, status: "ACTIVE" },
+        data: { status: "EXPIRED" },
+      });
+      return false;
+    }
+    return true;
   }
 
   async listByUser(userId: string): Promise<PurchaseDto[]> {
