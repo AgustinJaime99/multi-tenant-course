@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   Award,
   BookOpen,
+  CreditCard,
   LayoutDashboard,
   LifeBuoy,
   LogOut,
@@ -18,6 +19,7 @@ import { cn } from "@/lib/utils";
 const links = [
   { href: "/dashboard", label: "Inicio", icon: LayoutDashboard },
   { href: "/dashboard/courses", label: "Mis cursos", icon: BookOpen },
+  { href: "/dashboard/payments", label: "Pagos", icon: CreditCard },
   { href: "/dashboard/certificates", label: "Certificados", icon: Award },
   { href: "/dashboard/support", label: "Soporte", icon: LifeBuoy },
 ];

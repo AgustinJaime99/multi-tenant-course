@@ -106,6 +106,8 @@ export class PrismaPurchaseRepository implements PurchaseRepository {
       status: p.status as PurchaseStatus,
       provider: p.provider as PaymentProvider,
       createdAt: p.createdAt.toISOString(),
+      startedAt: p.startedAt ? p.startedAt.toISOString() : null,
+      expiresAt: p.expiresAt ? p.expiresAt.toISOString() : null,
     };
   }
 }

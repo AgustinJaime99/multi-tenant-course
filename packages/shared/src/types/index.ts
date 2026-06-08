@@ -71,6 +71,8 @@ export interface PurchaseDto {
   status: PurchaseStatus;
   provider: PaymentProvider;
   createdAt: string;
+  startedAt: string | null;
+  expiresAt: string | null;
 }
 
 export interface PaymentDto {
