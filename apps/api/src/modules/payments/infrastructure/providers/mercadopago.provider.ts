@@ -100,64 +100,58 @@ export class MercadoPagoPaymentProvider implements IPaymentProvider {
       id?: string | number;
     };
 
-    // Validate signature if we have the secret configured
-    if (this.webhookSecret) {
-      try {
-        const xSignature = headers["x-signature"] as string | undefined;
-        const xRequestId = headers["x-request-id"] as string | undefined;
-        const dataId = body?.data?.id ?? String(body?.id ?? "");
+    this.logger.log(`Webhook MP recibido: type=${body.type} action=${body.action} data=${JSON.stringify(body.data)}`);
 
-        if (xSignature && xRequestId) {
-          WebhookSignatureValidator.validate({
-            xSignature,
-            xRequestId,
-            dataId,
-            secret: this.webhookSecret,
-          });
-        }
+    // Validate signature only when both headers are present (sandbox doesn't send them)
+    const xSignature  = headers["x-signature"]  as string | undefined;
+    const xRequestId  = headers["x-request-id"] as string | undefined;
+    const dataId      = body?.data?.id ?? String(body?.id ?? "");
+
+    if (this.webhookSecret && xSignature && xRequestId) {
+      try {
+        WebhookSignatureValidator.validate({ xSignature, xRequestId, dataId, secret: this.webhookSecret });
+        this.logger.log("Webhook MP: firma válida");
       } catch (err) {
-        this.logger.error("MercadoPago webhook: firma inválida", err);
-        // Return unknown to avoid approving a tampered request
+        this.logger.error("Webhook MP: firma inválida", err);
         return { externalId: "", approved: false, rawStatus: "invalid_signature" };
       }
     }
 
-    // MP sends two webhook types: "payment" (real-time) and "merchant_order"
-    // We handle the "payment" type — fetch the payment from MP to confirm status
-    const resourceId = body?.data?.id ?? String(body?.id ?? "");
+    // Get the MP payment ID from the notification body
+    const mpPaymentId = body?.data?.id ?? String(body?.id ?? "");
 
-    if (!resourceId) {
+    if (!mpPaymentId) {
+      this.logger.warn("Webhook MP: sin payment ID en el body");
       return { externalId: "", approved: false, rawStatus: "no_resource_id" };
     }
 
-    // If client is available, fetch the actual payment to get externalRef and status
-    if (this.client && (body.type === "payment" || body.action?.startsWith("payment."))) {
+    // Always fetch the actual payment from MP to get real status + our external_reference
+    if (this.client) {
       try {
-        const mpPayment = new Payment(this.client);
-        const paymentData = await mpPayment.get({ id: resourceId });
-
+        const mpPayment  = new Payment(this.client);
+        const paymentData = await mpPayment.get({ id: mpPaymentId });
+        const status      = paymentData.status ?? "unknown";
+        // external_reference is our internal paymentId set when creating the preference
         const externalRef = String(paymentData.external_reference ?? "");
-        const status = paymentData.status ?? "unknown";
 
-        this.logger.log(`Webhook MP: pago ${resourceId} estado=${status} ref=${externalRef}`);
+        this.logger.log(`Webhook MP: mp_id=${mpPaymentId} status=${status} our_ref=${externalRef}`);
 
         return {
-          externalId: externalRef,  // this is our internal paymentId
+          externalId: externalRef,
           approved: status === "approved",
           rawStatus: status,
         };
       } catch (err) {
-        this.logger.error(`No se pudo consultar pago MP ${resourceId}`, err);
+        this.logger.error(`Webhook MP: no se pudo consultar pago ${mpPaymentId}`, err);
       }
     }
 
-    // Fallback for test/sandbox notifications
-    const approved =
-      body.action === "payment.updated" ||
-      (body.type === "payment" && body.action === "payment.updated");
+    // Fallback (no MP client / sandbox without credentials)
+    const approved = body.action === "payment.updated" || body.type === "payment";
+    this.logger.warn(`Webhook MP fallback: approved=${approved}`);
 
     return {
-      externalId: resourceId,
+      externalId: mpPaymentId,
       approved,
       rawStatus: body.action ?? body.type ?? "unknown",
     };
