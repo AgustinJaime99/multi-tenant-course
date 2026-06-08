@@ -71,9 +71,9 @@ export class PrismaPaymentRepository implements PaymentRepository {
     return list.map((p) => this.map(p));
   }
 
-  async totalApprovedCents(): Promise<number> {
+  async totalApprovedCentsByCurrency(currency: string): Promise<number> {
     const r = await this.prisma.payment.aggregate({
-      where: { status: "APPROVED" },
+      where: { status: "APPROVED", currency },
       _sum: { amountCents: true },
     });
     return r._sum.amountCents ?? 0;

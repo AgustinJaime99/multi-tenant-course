@@ -19,12 +19,13 @@ export class AdminService {
   ) {}
 
   async analytics(): Promise<AdminAnalytics> {
-    const [totalUsers, totalCourses, activePurchases, totalRevenueCents, revenueByMonth] =
+    const [totalUsers, totalCourses, activePurchases, revenueUsdCents, revenueArsCents, revenueByMonth] =
       await Promise.all([
         this.users.count(),
         this.courses.count(),
         this.purchases.countActive(),
-        this.payments.totalApprovedCents(),
+        this.payments.totalApprovedCentsByCurrency("USD"),
+        this.payments.totalApprovedCentsByCurrency("ARS"),
         this.payments.revenueByMonth(),
       ]);
 
@@ -35,7 +36,8 @@ export class AdminService {
       totalUsers,
       totalCourses,
       activePurchases,
-      totalRevenueCents,
+      revenueUsdCents,
+      revenueArsCents,
       revenueByMonth,
       conversionRate,
     };

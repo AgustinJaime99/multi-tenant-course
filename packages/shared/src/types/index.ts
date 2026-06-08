@@ -118,7 +118,8 @@ export interface AdminAnalytics {
   totalUsers: number;
   totalCourses: number;
   activePurchases: number;
-  totalRevenueCents: number;
+  revenueUsdCents: number;
+  revenueArsCents: number;
   revenueByMonth: { month: string; revenueCents: number }[];
   conversionRate: number;
 }

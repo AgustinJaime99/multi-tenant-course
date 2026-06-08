@@ -19,14 +19,16 @@ export class MercadoPagoPaymentProvider implements IPaymentProvider {
   private readonly logger = new Logger(MercadoPagoPaymentProvider.name);
   private readonly client: MercadoPagoConfig | null = null;
   private readonly webhookSecret: string;
+  private readonly isTestMode: boolean;
 
   constructor(private readonly config: ConfigService) {
     const accessToken = this.config.get<string>("payments.mercadopago.accessToken");
     this.webhookSecret = this.config.get<string>("payments.mercadopago.webhookSecret") ?? "";
+    this.isTestMode = this.config.get<boolean>("payments.mercadopago.testMode") ?? false;
 
     if (accessToken) {
       this.client = new MercadoPagoConfig({ accessToken });
-      this.logger.log("MercadoPago iniciado en modo real");
+      this.logger.log(`MercadoPago iniciado en modo ${this.isTestMode ? "TEST" : "PRODUCCIÓN"}`);
     } else {
       this.logger.warn("MercadoPago sin ACCESS_TOKEN: usando checkout simulado");
     }
@@ -71,8 +73,6 @@ export class MercadoPagoPaymentProvider implements IPaymentProvider {
           pending: `${frontendUrl}/courses/${input.courseId}?payment=pending`,
         },
         notification_url: `${backendUrl}/api/payments/webhooks/mercadopago`,
-        // wallet_purchase shows QR + all payment methods on MP checkout page
-        purpose: "wallet_purchase",
       },
     });
 
@@ -107,7 +107,9 @@ export class MercadoPagoPaymentProvider implements IPaymentProvider {
     const xRequestId  = headers["x-request-id"] as string | undefined;
     const dataId      = body?.data?.id ?? String(body?.id ?? "");
 
-    if (this.webhookSecret && xSignature && xRequestId) {
+    if (this.isTestMode) {
+      this.logger.log("Webhook MP: modo TEST — omitiendo validación de firma");
+    } else if (this.webhookSecret && xSignature && xRequestId) {
       try {
         WebhookSignatureValidator.validate({ xSignature, xRequestId, dataId, secret: this.webhookSecret });
         this.logger.log("Webhook MP: firma válida");

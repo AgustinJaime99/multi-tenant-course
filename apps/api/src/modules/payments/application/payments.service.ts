@@ -90,8 +90,10 @@ export class PaymentsService {
   ): Promise<{ received: true }> {
     const impl = this.resolve(provider);
     const result = await impl.handleWebhook(payload, headers);
+    // external_reference from MP == our internal paymentId, so try findById first
     const payment = result.externalId
-      ? await this.payments.findByExternalId(result.externalId)
+      ? (await this.payments.findById(result.externalId) ??
+         await this.payments.findByExternalId(result.externalId))
       : null;
 
     if (!payment) {

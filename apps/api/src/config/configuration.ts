@@ -13,7 +13,7 @@ export interface AppConfig {
   };
   payments: {
     stripe: { secretKey: string; webhookSecret: string };
-    mercadopago: { accessToken: string; webhookSecret: string };
+    mercadopago: { accessToken: string; webhookSecret: string; testMode: boolean };
     binance: { apiKey: string; secretKey: string };
   };
 }
@@ -39,6 +39,7 @@ export default (): AppConfig => ({
     mercadopago: {
       accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN ?? "",
       webhookSecret: process.env.MERCADOPAGO_WEBHOOK_SECRET ?? "",
+      testMode: process.env.MERCADOPAGO_TEST_MODE === "true",
     },
     binance: {
       apiKey: process.env.BINANCE_PAY_API_KEY ?? "",

@@ -39,11 +39,16 @@ export default function AdminPage() {
         </Link>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <KpiCard label="Usuarios" value={analytics.totalUsers} icon={Users} />
         <KpiCard label="Cursos" value={analytics.totalCourses} icon={BookOpen} />
         <KpiCard label="Suscripciones activas" value={analytics.activePurchases} icon={TrendingUp} />
-        <KpiCard label="Ingresos totales" value={formatPrice(analytics.totalRevenueCents)} icon={DollarSign} />
+        <KpiCard label="Ingresos USD" value={formatPrice(analytics.revenueUsdCents)} icon={DollarSign} />
+        <KpiCard
+          label="Ingresos ARS"
+          value={new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(analytics.revenueArsCents / 100)}
+          icon={DollarSign}
+        />
       </div>
 
       <div className="card p-5">

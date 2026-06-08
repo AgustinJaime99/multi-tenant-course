@@ -25,7 +25,7 @@ export interface PaymentRepository {
   findById(id: string): Promise<{ id: string; userId: string; courseId: string; status: PaymentStatus } | null>;
   listByUser(userId: string): Promise<PaymentDto[]>;
   listAll(): Promise<PaymentDto[]>;
-  totalApprovedCents(): Promise<number>;
+  totalApprovedCentsByCurrency(currency: string): Promise<number>;
   revenueByMonth(): Promise<{ month: string; revenueCents: number }[]>;
 }
 
